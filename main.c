@@ -1,3 +1,16 @@
+//
+// Created by CalebCintary 15.12.2020
+//
+/**
+ * FIXME Found exception when closing program
+ *      When program shutdown free call exception with invalid pointer also with
+ *      returning pointer to start value. After it, i can think that free methods inside program
+ *      also doesnt work.
+ *
+ * Program works on
+ *  ArchLinux amd64 linux 5.10.1.arch1-1 gcc 10.2.0-4 gdb 10.1-4 ncurses 6.2-1
+ */
+
 #include "stdlib.h"
 #include "stdio.h"
 #include "ncurses.h"
@@ -9,13 +22,13 @@ struct TV* array;
 struct TV* pStart;
 size_t size;
 
-void add_new_tv() {
-    clear();
-    pStart = realloc(pStart, ++size*sizeof(struct TV));
-    if (pStart == NULL) {
+void add_new_tv() { // Function for adding object into dynamic array
+    clear(); // Clear screen from previous messages
+    pStart = realloc(pStart, ++size*sizeof(struct TV)); //Realloc memory for inserting new object
+    if (pStart == NULL) { // Check for null
         fprintf(stderr, "Failed to reallocate array");
     }
-    array = pStart + (size - 1) * sizeof(struct TV);
+    array = pStart + (size - 1) * sizeof(struct TV); // move pointer to last object and inputing data from terminal
     printw("Input model name: "); scanw("%s", &array->model);
     printw("Input manufacturer name: "); scanw("%s", &array->manufacturer);
     printw("Input matrix resolution: "); scanw("%s", &array->resolution);
@@ -32,21 +45,22 @@ void add_new_tv() {
 }
 
 int select_id() {
-    clear();
+    clear(); //Clear screen from previous messages
     int id = 0;
     printw("Select TV id (0..%d): ", size - 1); scanw("%d", &id);
     return id;
 }
 void display_tv() {
-    int id = select_id();
+    int id = select_id(); //Getting needed id
     clear();
-    array = pStart + id * sizeof(struct TV);
-    
+    array = pStart + id * sizeof(struct TV); //Moving pointer to needed object
+
+    //Output
     printw("Model name is %s\n", &array->model);
     printw("Manufacturer is %s\n", &array->manufacturer);
     
     char* matrixType;
-    switch (array->matrixType)
+    switch (array->matrixType) //Selecting needed enum object because we do not have enum.getName().toUpperCase()
     {
     case 0:
         matrixType = "LED";
@@ -77,11 +91,11 @@ void display_tv() {
 }
 
 void remove_tv() {
-    clear();
-    int id = select_id();
-    clear();
-    array = pStart;
-    struct TV* newArray = malloc((size - 1) * sizeof(struct TV));
+    clear(); //Clear screen from previous messages
+    int id = select_id(); //Getting needed id
+    clear(); // Clear screen from previous messages
+    array = pStart; //Moving array to start
+    struct TV* newArray = malloc((size - 1) * sizeof(struct TV)); //Allocating memory for new data
     struct TV* pNewStart = newArray;
     if (newArray == NULL) {
         printw("Failed to allocate memory\n");
@@ -90,7 +104,7 @@ void remove_tv() {
         exit(-1);
     }
 
-    for (int i = 0; i < size; ++i) {
+    for (int i = 0; i < size; ++i) { //Copying data except removed
         if (i != id) {
             newArray->model = array->model;
             newArray->manufacturer = array->manufacturer;
@@ -102,7 +116,7 @@ void remove_tv() {
         array += sizeof(struct TV);
     }
 
-    free(pStart);
+    free(pStart); // removing previous array and updating current to buffer
     array = pNewStart;
     pStart = pNewStart;
     --size;
@@ -116,14 +130,16 @@ void remove_tv() {
 int main(int argc, char** argv) {
 
     size = 0;
-    array = malloc(0);
+    array = malloc(0); //Allocating dynamic array
     pStart = array;
 
-    initscr();
+    initscr(); //Initializing ncurses terminal screen
     int WindowShouldClose = 0;
 
-    while (!WindowShouldClose)
+    while (!WindowShouldClose) //Main loop
     {
+
+        //Getting action id and invoke selected function
         printw("Select menu entry: \n 1. Add new TV\n 2. Display TV info \n 3. Remove TV \n 4. Exit\n");
         refresh();
         int key = getch();
@@ -145,6 +161,7 @@ int main(int argc, char** argv) {
                 exit(0);
                 break;
             default:
+                WindowShouldClose = 1;
                 break;
             }
         }
@@ -152,7 +169,7 @@ int main(int argc, char** argv) {
     }
     
 
-    endwin();
+    endwin(); //Freeing memory and terminating ncurses
     array = pStart;
     free(array);
 
