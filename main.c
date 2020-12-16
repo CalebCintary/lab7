@@ -38,7 +38,7 @@ void add_new_tv() { // Function for adding object into dynamic array
     printw("2. AMOLED\n");
     printw("3. TN\n");
     printw("4. TNFILM\n");
-    printw("5. VA");
+    printw("5. VA\n");
     int matrixtype = 0;
     scanw("%d", &matrixtype);
     array->matrixType = matrixtype - 1;
@@ -46,46 +46,63 @@ void add_new_tv() { // Function for adding object into dynamic array
 
 int select_id() {
     clear(); //Clear screen from previous messages
+    if (size == 0) {
+        return -1;
+    }
     int id = 0;
-    printw("Select TV id (0..%d): ", size - 1); scanw("%d", &id);
+    if (size == 1) {
+        printw("Select TV id (0): ", size - 1); scanw("%d", &id);
+    }
+    if (size > 1) {
+        printw("Select TV id (0..%d): ", size - 1); scanw("%d", &id);
+    }
     return id;
 }
 void display_tv() {
     int id = select_id(); //Getting needed id
     clear();
-    array = pStart + id * sizeof(struct TV); //Moving pointer to needed object
+    if (id != -1) {
+        if ((id >= 0) && (id < size)) {
+            array = pStart + id * sizeof(struct TV); //Moving pointer to needed object
 
-    //Output
-    printw("Model name is %s\n", &array->model);
-    printw("Manufacturer is %s\n", &array->manufacturer);
-    
-    char* matrixType;
-    switch (array->matrixType) //Selecting needed enum object because we do not have enum.getName().toUpperCase()
-    {
-    case 0:
-        matrixType = "LED";
-        break;
-    case 1: 
-        matrixType = "AMOLED";
-        break;
-    case 2:
-        matrixType = "TN";
-        break;
-    case 3: 
-        matrixType = "TNFILM";
-        break;
-    case 4: 
-        matrixType = "VA";
-        break;
-    default:
-        matrixType = "unknown matrixType";
-        break;
+            //Output
+            printw("Model name is %s\n", &array->model);
+            printw("Manufacturer is %s\n", &array->manufacturer);
+
+            char *matrixType;
+            switch (array->matrixType) //Selecting needed enum object because we do not have enum.getName().toUpperCase()
+            {
+                case 0:
+                    matrixType = "LED";
+                    break;
+                case 1:
+                    matrixType = "AMOLED";
+                    break;
+                case 2:
+                    matrixType = "TN";
+                    break;
+                case 3:
+                    matrixType = "TNFILM";
+                    break;
+                case 4:
+                    matrixType = "VA";
+                    break;
+                default:
+                    matrixType = "unknown matrixType";
+                    break;
+            }
+            printw("Matrix type is %s\n", matrixType);
+
+            printw("Resolution is %s\n", &array->resolution);
+            printw("Refresh rate is %s\n", &array->refreshRate);
+        }
+        else {
+            printw("c.lang.IndexOutOfBoundsException\n"); //Just a joke
+        }
     }
-    printw("Matrix type is %s\n", matrixType);
-
-    printw("Resolution is %s\n", &array->resolution);
-    printw("Refresh rate is %s\n", &array->refreshRate);
-
+    else {
+        printw("There is no TV in array\n");
+    }
     printw("Press any key to continue...");
     getch();
 }
@@ -93,33 +110,47 @@ void display_tv() {
 void remove_tv() {
     clear(); //Clear screen from previous messages
     int id = select_id(); //Getting needed id
-    clear(); // Clear screen from previous messages
-    array = pStart; //Moving array to start
-    struct TV* newArray = malloc((size - 1) * sizeof(struct TV)); //Allocating memory for new data
-    struct TV* pNewStart = newArray;
-    if (newArray == NULL) {
-        printw("Failed to allocate memory\n");
-        printw("Press any key to exit");
-        getch();
-        exit(-1);
-    }
+    if (id != -1) {
+        if ((id >= 0) && (id < size)) {
+            clear(); // Clear screen from previous messages
+            array = pStart; //Moving array to start
+            struct TV *newArray = malloc((size - 1) * sizeof(struct TV)); //Allocating memory for new data
+            struct TV *pNewStart = newArray;
+            if (newArray == NULL) {
+                printw("Failed to allocate memory\n");
+                printw("Press any key to exit");
+                getch();
+                exit(-1);
+            }
 
-    for (int i = 0; i < size; ++i) { //Copying data except removed
-        if (i != id) {
-            newArray->model = array->model;
-            newArray->manufacturer = array->manufacturer;
-            newArray->matrixType = array->matrixType;
-            newArray->resolution = array->resolution;
-            newArray->refreshRate = array->refreshRate;
-            newArray += sizeof(struct TV);
+            for (int i = 0; i < size; ++i) { //Copying data except removed
+                if (i != id) {
+                    newArray->model = array->model;
+                    newArray->manufacturer = array->manufacturer;
+                    newArray->matrixType = array->matrixType;
+                    newArray->resolution = array->resolution;
+                    newArray->refreshRate = array->refreshRate;
+                    newArray += sizeof(struct TV);
+                }
+                array += sizeof(struct TV);
+            }
+
+            free(pStart); // removing previous array and updating current to buffer
+            array = pNewStart;
+            pStart = pNewStart;
+            --size;
         }
-        array += sizeof(struct TV);
+        else {
+            printw("Object with this id does not exists\n");
+            printw("Press any key to continue...");
+            getch();
+        }
     }
-
-    free(pStart); // removing previous array and updating current to buffer
-    array = pNewStart;
-    pStart = pNewStart;
-    --size;
+    else {
+        printw("There is no TV in array\n");
+        printw("Press any key to continue...");
+        getch();
+    }
     clear();
 }
 
